@@ -11,16 +11,21 @@ let paddleY = (canvas.height - paddleHeight) / 2;
 let computerPaddleY = paddleY;
 let ballX = canvas.width / 2, ballY = canvas.height / 2;
 let ballDX = 4, ballDY = 4;
+let speedIncrement = 0.2;  // Amount to increase ball speed after each player hit
 
 // Scores
 let playerScore = 0;
 let computerScore = 0;
 
-// Controls
-document.addEventListener("mousemove", movePaddle);
+// Event listeners for both desktop and mobile touch
+document.addEventListener("mousemove", (e) => movePaddle(e.clientY));
+canvas.addEventListener("touchmove", (e) => {
+    e.preventDefault();  // Prevent scrolling while playing
+    movePaddle(e.touches[0].clientY);
+});
 
-function movePaddle(e) {
-    paddleY = e.clientY - paddleHeight / 2;
+function movePaddle(positionY) {
+    paddleY = positionY - paddleHeight / 2;
     if (paddleY < 0) paddleY = 0;
     if (paddleY + paddleHeight > canvas.height) paddleY = canvas.height - paddleHeight;
 }
@@ -65,15 +70,18 @@ function gameLoop() {
         ballDY = -ballDY;
     }
 
-    // Ball-paddle collisions
+    // Ball-player paddle collision with speed increment
     if (
         ballX - ballRadius < paddleWidth &&
         ballY > paddleY &&
         ballY < paddleY + paddleHeight
     ) {
         ballDX = -ballDX;
+        ballDX *= 1 + speedIncrement;  // Speed up ball
+        ballDY *= 1 + speedIncrement;
     }
 
+    // Ball-computer paddle collision (no speed increment)
     if (
         ballX + ballRadius > canvas.width - paddleWidth &&
         ballY > computerPaddleY &&
@@ -87,10 +95,10 @@ function gameLoop() {
 
     // Update scores if ball goes out of bounds
     if (ballX - ballRadius < 0) {
-        computerScore++; // Computer scores a point
+        computerScore++;  // Computer scores a point
         resetBall();
     } else if (ballX + ballRadius > canvas.width) {
-        playerScore++; // Player scores a point
+        playerScore++;  // Player scores a point
         resetBall();
     }
 
@@ -100,7 +108,8 @@ function gameLoop() {
 function resetBall() {
     ballX = canvas.width / 2;
     ballY = canvas.height / 2;
-    ballDX = -ballDX; // Reverse direction
+    ballDX = Math.sign(ballDX) * 4;  // Reset speed to initial value but maintain direction
+    ballDY = Math.sign(ballDY) * 4;
 }
 
 gameLoop();
